@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facturas Vencidas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #445e93 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #9381ff, #9381ff);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: pulse 4s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.1); opacity: 0.3; }
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .subtitle {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            position: relative;
+            z-index: 1;
+        }
+
+        .messages {
+            padding: 20px 30px;
+            background: #9381ff;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+
+        /* Sección de Gmail */
+        .gmail-section {
+            margin: 20px 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .gmail-info {
+            flex: 1;
+        }
+
+        .gmail-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .gmail-status {
+            font-size: 0.9rem;
+            color: #666;
+        }
+
+        .gmail-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn-gmail {
+            background: linear-gradient(135deg, #4285f4 0%, #34a853 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-gmail:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(66, 133, 244, 0.4);
+        }
+
+        .btn-gmail.secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+        }
+
+        .btn-gmail.secondary:hover {
+            box-shadow: 0 8px 20px rgba(108, 117, 125, 0.4);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: #f8f9fa;
+            margin: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-numberF {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f79d65;
+        }
+
+        .stat-numberM {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #6a8eae;
+        }
+
+        .stat-numberC {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ef233c;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Sección de envío masivo */
+        .bulk-section {
+            margin: 20px 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            text-align: center;
+        }
+
+        .btn-bulk {
+            background: linear-gradient(135deg, #9381ff 0%, #9381ff 100%);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-bulk:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(147, 129, 255, 0.4);
+            background: linear-gradient(135deg, #aeb8fe 0%, #aeb8fe 100%);
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 15% auto;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .modal h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+
+        .modal p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .btn-cancel {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .btn-confirm {
+            background: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover {
+            color: black;
+        }
+
+        .table-container {
+            padding: 30px;
+            overflow-x: auto;
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        .sort-icon {
+            margin-left: 5px;
+            font-size: 0.8rem;
+            display: inline-block;
+            transition: transform 0.2s ease;
+            color: white;
+        }
+
+        th.sorted-asc .sort-icon::after {
+            content: "▲";
+        }
+
+        th.sorted-desc .sort-icon::after {
+            content: "▼";
+        }
+
+        .table th {
+            background: linear-gradient(135deg, #9381ff 0%, #AEA0FF 100%);
+            color: white;
+            padding: 20px 15px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            position: relative;
+        }
+
+        .table th::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .table td {
+            padding: 18px 15px;
+            border-bottom: 1px solid #e9ecef;
+            vertical-align: middle;
+            transition: all 0.3s ease;
+        }
+
+        .table tr:hover {
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .factura-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .cliente-name {
+            color: #34495e;
+            font-weight: 500;
+        }
+
+        .fecha {
+            color: #34495e;
+            font-family: 'Courier New', monospace;
+        }
+
+        .total {
+            font-weight: 700;
+            color: #57a773;
+            font-size: 1.1rem;
+        }
+
+        .dias-vencido {
+            font-weight: 600;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        .dias-vencido.critico {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .dias-vencido.alto {
+            background: #fff3e0;
+            color: #ef6c00;
+            border: 1px solid #ffcc02;
+        }
+
+        .dias-vencido.medio {
+            background: #f3e5f5;
+            color: #7b1fa2;
+            border: 1px solid #ce93d8;
+        }
+
+        .btn-enviar {
+            background: linear-gradient(135deg, #9381ff 0%, #9381ff 100%);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-enviar:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            background: linear-gradient(135deg, #aeb8fe 0%, #aeb8fe 100%);
+        }
+
+        .btn-enviar:active {
+            transform: translateY(0);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .table-container {
+                padding: 15px;
+            }
+
+            .table th,
+            .table td {
+                padding: 12px 8px;
+                font-size: 0.9rem;
+            }
+
+            .stats {
+                flex-direction: column;
+                gap: 15px;
+            }
+
+            .bulk-section {
+                margin: 15px;
+            }
+
+            .gmail-section {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .gmail-buttons {
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Facturas Vencidas</h1>
+            <div class="subtitle">Notificaciones de pago</div>
+        </div>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="messages">
+              {% for category, message in messages %}
+                <div class="message {{ category }}">
+                  {% if category == 'success' %}✅{% elif category == 'warning' %}⚠️{% else %}❌{% endif %}
+                  {{ message }}
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <!-- Sección de Gmail -->
+        <div class="gmail-section">
+            <div class="gmail-info">
+                <div class="gmail-title">📧 Configuración de Gmail</div>
+                <div class="gmail-status">Gestiona la autorización para envío de correos</div>
+            </div>
+            <div class="gmail-buttons">
+                <a href="{{ url_for('estado_gmail') }}" class="btn-gmail secondary">
+                    🔍 Verificar Estado
+                </a>
+                <a href="{{ url_for('autorizar_gmail') }}" class="btn-gmail">
+                    🔐 Autorizar Gmail
+                </a>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="stat-item">
+                <div class="stat-numberF">{{ facturas|length }}</div>
+                <div class="stat-label">Total Facturas</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-numberM">${{ "{:,.2f}".format(facturas|sum(attribute='amount_total')) }}</div>
+                <div class="stat-label">Monto Total</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-numberC">{{ facturas|selectattr('dias_vencido', 'gt', 30)|list|length }}</div>
+                <div class="stat-label">Críticas (+30 días)</div>
+            </div>
+        </div>
+
+        <!-- Formulario de filtro por días vencidos -->
+        <form method="get" action="/" style="margin: 20px 30px; text-align: center;">
+            <label for="desde">Días vencidos desde:
+                <input type="number" id="desde" name="desde" min="0" value="{{ request.args.get('desde', '') }}">
+            </label>
+            <label for="hasta"> hasta:
+                <input type="number" id="hasta" name="hasta" min="0" value="{{ request.args.get('hasta', '') }}">
+            </label>
+            <label for="cliente">Cliente:
+            <input type="text" id="cliente" name="cliente" value="{{ request.args.get('cliente', '') }}" placeholder="Nombre del cliente">
+            </label>
+            <button type="submit" class="btn-gmail secondary">🔎 Filtrar</button>
+        </form>
+
+        <!-- Sección de Envío Masivo -->
+        <div class="bulk-section">
+            <button onclick="confirmarEnvioMasivo()" class="btn-bulk">
+                📤 Enviar a todos los clientes
+            </button>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th onclick="sortTable(0, this)">Factura <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(1, this)">Cliente <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(2, this)">Vencimiento <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(3, this)">Total <span class="sort-icon"></span></th>
+                        <th onclick="sortTable(4, this)">Días Vencido <span class="sort-icon"></span></th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for f in facturas %}
+                    <tr>
+                        <td class="factura-name">{{ f.name }}</td>
+                        <td class="cliente-name">{{ f.partner_id[1] }}</td>
+                        <td class="fecha">{{ f.invoice_date_due }}</td>
+                        <td class="total">${{ "{:,.2f}".format(f.amount_total) }}</td>
+                        <td>
+                            <span class="dias-vencido {% if f.dias_vencido > 30 %}critico{% elif f.dias_vencido > 15 %}alto{% else %}medio{% endif %}">
+                                {{ f.dias_vencido }} días
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('enviar', factura_id=f.id) }}" class="btn-enviar">
+                                📧 Enviar correo
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal de Confirmación -->
+        <div id="modalConfirmacion" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="cerrarModal()">&times;</span>
+                <h3>⚠️ Confirmar envío masivo</h3>
+                <p>¿Estás seguro de que quieres enviar recordatorios a <strong>{{ facturas|length }}</strong> clientes?</p>
+                <div class="modal-buttons">
+                    <button onclick="cerrarModal()" class="btn-cancel">Cancelar</button>
+                    <a href="/enviar-todos?desde={{ request.args.get('desde', '') }}&hasta={{ request.args.get('hasta', '') }}&cliente={{ request.args.get('cliente', '') }}" class="btn-confirm">Sí, enviar recordatorios</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function confirmarEnvioMasivo() {
+            document.getElementById('modalConfirmacion').style.display = 'block';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalConfirmacion').style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            let modal = document.getElementById('modalConfirmacion');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        let currentSortedCol = null;
+
+        function sortTable(colIndex, thElement) {
+            const table = document.querySelector(".table");
+            const tbody = table.querySelector("tbody");
+            const rows = Array.from(tbody.querySelectorAll("tr"));
+
+            const isAsc = !thElement.classList.contains("sorted-asc");
+
+            // Limpiar íconos de otras columnas
+            table.querySelectorAll("th").forEach(th => th.classList.remove("sorted-asc", "sorted-desc"));
+
+            // Agregar clase al th actual
+            thElement.classList.add(isAsc ? "sorted-asc" : "sorted-desc");
+
+            rows.sort((a, b) => {
+                let aText = a.children[colIndex].textContent.trim().replace(/[\$, días]/g, "");
+                let bText = b.children[colIndex].textContent.trim().replace(/[\$, días]/g, "");
+
+                let aVal = isNaN(aText) ? aText.toLowerCase() : parseFloat(aText);
+                let bVal = isNaN(bText) ? bText.toLowerCase() : parseFloat(bText);
+
+                if (aVal < bVal) return isAsc ? -1 : 1;
+                if (aVal > bVal) return isAsc ? 1 : -1;
+                return 0;
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+        }
+
+    </script>
+</body>
+</html>

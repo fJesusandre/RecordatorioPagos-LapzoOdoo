@@ -1,0 +1,33 @@
+# Entorno virtual
+venv/
+env/
+
+# Variables de entorno
+.env
+
+#Tokens de Gmail
+token.json
+credentials.json
+credentials.Identifier
+
+# Archivos compilados de Python
+__pycache__/
+*.py[cod]
+
+# Archivos de log
+*.log
+
+# Archivos de configuración de IDEs/editors
+.vscode/
+.idea/
+
+# Otros archivos temporales
+*.swp
+*.bak
+*.tmp
+
+# Archivos de testing o cobertura
+htmlcov/
+coverage.xml
+.pytest_cache/
+main.py
