@@ -22,12 +22,16 @@ class OdooConnector:
         """Establece conexión con el servidor Odoo."""
         try:
             logger.info(f"Conectando a {ODOO_URL}...")
-            common = xmlrpc.client.ServerProxy(f"{ODOO_URL}/xmlrpc/2/common")
+
+            # Uso de transporte seguro para HTTPS
+            transport = xmlrpc.client.SafeTransport()
+
+            common = xmlrpc.client.ServerProxy(f"{ODOO_URL}/xmlrpc/2/common", transport=transport)
             self.uid = common.authenticate(ODOO_DB, ODOO_USER, ODOO_API_KEY, {})
             if not self.uid:
                 logger.error("Autenticación fallida. Verifica las credenciales.")
                 return False
-            self.models = xmlrpc.client.ServerProxy(f"{ODOO_URL}/xmlrpc/2/object")
+            self.models = xmlrpc.client.ServerProxy(f"{ODOO_URL}/xmlrpc/2/object", transport=transport)
             logger.info("Conexión exitosa a Odoo")
             return True
         except Exception as e:
