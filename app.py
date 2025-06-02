@@ -1,12 +1,14 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 from flask import Flask, render_template, request, redirect, url_for, flash
 from odoo_connector import OdooConnector
 from email_sender import GmailWebClient
-from dotenv import load_dotenv
+
 import os, time, threading, logging
 
 # Configuración básica
 app = Flask(__name__)
-load_dotenv()
 app.secret_key = os.getenv("SECRET_KEY_FLASK")
 logging.basicConfig(level=logging.INFO)
 
