@@ -1,6 +1,5 @@
 Flask
-gunicorn
 python-dotenv
-odoo
-xmlrpc.client
-logging
+google-auth
+google-auth-oauthlib
+google-api-python-client
