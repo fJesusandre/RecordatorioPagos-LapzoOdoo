@@ -49,7 +49,9 @@ class OdooConnector:
         domain = [
             ('move_type', '=', 'out_invoice'),
             ('invoice_date_due', '<', due_date),
-            ('payment_state', '!=', 'paid')
+            ('payment_state', '!=', 'paid'),
+            ('state', '!=', 'cancel'),
+            ('state', '=', 'posted')
         ]
         fields = ['name', 'partner_id', 'amount_total', 'invoice_date_due', 'invoice_date']
 

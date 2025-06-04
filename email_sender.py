@@ -136,7 +136,7 @@ class GmailWebClient:
         """Envía un correo de recordatorio de pago usando la API de Gmail."""
         msg = MIMEMultipart()
         msg["To"] = destinatario
-        #msg["Cc"] = "facturacion@lapzo.com"
+        msg["Cc"] = "juan.novelo@lapzo.com"
         msg["Subject"] = f"Recordatorio de pago - Factura {factura}"
 
         cuerpo = f""" 

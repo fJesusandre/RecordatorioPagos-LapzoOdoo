@@ -73,7 +73,7 @@ class InvoiceApp:
 
         try:
             enviado = self.gmail.enviar_correo(
-                destinatario='fjesusandre@gmail.com',  # cliente['email'],
+                destinatario=cliente['email'],
                 nombre=cliente['name'],
                 factura=factura['name'],
                 fecha=factura['invoice_date_due'],
