@@ -7,9 +7,11 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import Flow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from email_template import *
 
 SCOPES = SCOPES
 GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")
+CORREO_COPIA = os.getenv("CORREO_COPIA")
 TOKEN = os.getenv("TOKEN")
 
 class GmailWebClient:
@@ -20,12 +22,10 @@ class GmailWebClient:
         self.creds = self._autenticar()
         self.service = build('gmail', 'v1', credentials=self.creds)
 
-        # Try to authenticate, but don't fail if credentials aren't ready
         try:
             self.creds = self._autenticar()
             self.service = build('gmail', 'v1', credentials=self.creds)
         except ValueError as e:
-            # Store the error for later reference but don't fail initialization
             self._auth_error = str(e)
             print(f"Gmail authentication not ready: {e}")
         except Exception as e:
@@ -123,8 +123,7 @@ class GmailWebClient:
 
         creds = self._cargar_credenciales()
         if not creds:
-            # Para aplicaciones web, no podemos hacer autorización automática
-            # El usuario debe usar obtener_url_autorizacion() e intercambiar_codigo_por_token()
+            
             raise ValueError(
                 "No hay credenciales válidas. Use obtener_url_autorizacion() "
                 "para obtener la URL de autorización y luego "
@@ -132,38 +131,19 @@ class GmailWebClient:
             )
         return creds
 
-    def enviar_correo(self, destinatario, nombre, factura, fecha, monto, dias):
+    def enviar_correo(self, destinatario, nombre, factura, fecha, monto, moneda, dias, url=None):
         """Envía un correo de recordatorio de pago usando la API de Gmail."""
         msg = MIMEMultipart()
         msg["To"] = destinatario
-        msg["Cc"] = "juan.novelo@lapzo.com"
+        msg["Cc"] = CORREO_COPIA
         msg["Subject"] = f"Recordatorio de pago - Factura {factura}"
 
-        cuerpo = f""" 
-<p>Buen día <b>{nombre}</b>,</p>
-
-<p>¡Espero que se encuentren muy bien!</p>
-
-<p>Les escribo para recordarle amablemente que la factura <b>{factura}</b> con fecha de vencimiento <b>{fecha}</b>, aún no ha sido pagada.<br>
-El importe pendiente es de <b>${monto}</b> MXN.<br>
-Según nuestros registros, la factura venció hace <b>{dias}</b> días. Le agradeceríamos que pudiera realizar el pago lo antes posible.<br><br>
-
-Puede realizar dicho pago mediante transferencia bancaria a la siguiente cuenta:<br><br>
-<i><b>Banco:</b> Banamex<br>
-<b>Sucursal:</b> 861 C F SAN PEDRO NL<br>
-<b>Dirección:</b> RIO JORDAN #100 DEL VALLE<br>
-<b>Cuenta de Cheques:</b> 8012426210<br>
-<b>CLABE Interbancaria:</b> 002580700953579529<br>
-<b>Referencia o concepto de pago:</b> {factura}</i><br><br>
-
-<b>**Si ya ha realizado anteriormente la transacción, favor de compartir el comprobante de pago.**</b><br><br>
-
-Si tiene alguna pregunta o necesita ayuda, no dude en ponerse en contacto con nosotros.<br><br>
-
-¡Muchas gracias por su atención!<br>
-Saludos.</p>
-        """
-
+        if moneda== 'USD':
+            cuerpo = generar_correo_usd(nombre, factura, fecha, monto, moneda, dias, url)
+            
+        else:
+            cuerpo = generar_correo_mxn(nombre, factura, fecha, monto, moneda, dias, url)
+            
         msg.attach(MIMEText(cuerpo, "html"))
         mensaje_encoded = {
             'raw': base64.urlsafe_b64encode(msg.as_bytes()).decode()

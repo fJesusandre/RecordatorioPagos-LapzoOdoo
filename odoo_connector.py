@@ -40,31 +40,68 @@ class OdooConnector:
             return False
 
     def get_overdue_invoices(self, due_date=None):
-        """Obtiene facturas vencidas."""
+        
         if not self.connected:
             return []
 
         due_date = due_date or date.today().strftime('%Y-%m-%d')
-
-        domain = [
-            ('move_type', '=', 'out_invoice'),
-            ('invoice_date_due', '<', due_date),
-            ('payment_state', '!=', 'paid'),
-            ('state', '!=', 'cancel'),
-            ('state', '=', 'posted')
-        ]
-        fields = ['name', 'partner_id', 'amount_total', 'invoice_date_due', 'invoice_date']
+        cuentas_validas = ['1', '5', '6']  # Como strings
 
         try:
-            return self.models.execute_kw(
+            # Buscar líneas que tengan distribución analítica con nuestras cuentas
+            domain_lineas = [
+                ('move_id.move_type', '=', 'out_invoice'),
+                ('move_id.invoice_date_due', '<', due_date),
+                ('move_id.payment_state', '!=', 'paid'),
+                ('move_id.state', '=', 'posted'),
+                ('analytic_distribution', '!=', False)
+            ]
+
+            lineas = self.models.execute_kw(
                 ODOO_DB, self.uid, ODOO_API_KEY,
-                'account.move', 'search_read',
-                [domain],
-                {'fields': fields}
+                'account.move.line', 'search_read',
+                [domain_lineas],
+                {'fields': ['move_id', 'analytic_distribution']}
             )
-        except Exception as e:
-            logger.exception("Error al obtener facturas vencidas")
+
+            logger.info(f"Líneas encontradas con distribución analítica: {len(lineas)}")
+
+            # Filtrar las que tienen nuestras cuentas (las claves son strings)
+            facturas_validas = set()
+            for linea in lineas:
+                if linea.get('analytic_distribution'):
+                    # Las claves son strings {'6': 100.0}, {'5': 100.0}
+                    claves_distribucion = linea['analytic_distribution'].keys()
+                    if any(clave in cuentas_validas for clave in claves_distribucion):
+                        facturas_validas.add(linea['move_id'][0])
+
+            logger.info(f"Facturas válidas encontradas: {len(facturas_validas)}")
+
+            if not facturas_validas:
+                return []
+
+            # Obtener datos completos de las facturas válidas
+            factura_fields = [
+                'id', 'name', 'partner_id', 'currency_id',
+                'amount_residual_signed', 'amount_residual',
+                'invoice_date_due', 'invoice_date',
+                'access_token'
+            ]
+
+            facturas = self.models.execute_kw(
+                ODOO_DB, self.uid, ODOO_API_KEY,
+                'account.move', 'read',
+                [list(facturas_validas)],
+                {'fields': factura_fields}
+            )
+
+            logger.info(f"Retornando {len(facturas)} facturas con cuentas analíticas válidas")
+            return facturas
+
+        except Exception:
+            logger.exception("Error en método optimizado final")
             return []
+
 
     def get_customer_data(self, customer_id):
         """Obtiene datos completos del cliente."""
