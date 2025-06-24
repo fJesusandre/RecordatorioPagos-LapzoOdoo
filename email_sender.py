@@ -11,7 +11,7 @@ from email_template import *
 
 SCOPES = SCOPES
 GOOGLE_CREDENTIALS = os.getenv("GOOGLE_CREDENTIALS")
-CORREO_COPIA = os.getenv("CORREO_COPIA")
+CORREO_COPIA = "juan.novelo@lapzo.com, jesus.fernando@lapzo.com"
 TOKEN = os.getenv("TOKEN")
 
 class GmailWebClient:
@@ -134,17 +134,41 @@ class GmailWebClient:
     def enviar_correo(self, destinatario, nombre, factura, fecha, monto, moneda, dias, url=None):
         """Envía un correo de recordatorio de pago usando la API de Gmail."""
         msg = MIMEMultipart()
-        msg["To"] = destinatario
-        msg["Cc"] = CORREO_COPIA
+        # Manejar múltiples destinatarios principales
+        if isinstance(destinatario, str):
+            # Si es string, puede contener múltiples emails separados por comas
+            destinatarios_principales = [email.strip() for email in destinatario.split(',') if email.strip()]
+        elif isinstance(destinatario, list):
+            # Si es lista, tomar cada elemento
+            destinatarios_principales = [email.strip() for email in destinatario if email.strip()]
+        else:
+            destinatarios_principales = [str(destinatario)]
+        
+        if not destinatarios_principales:
+            print("❌ No se proporcionaron destinatarios válidos")
+            return False
+        
+        # Establecer destinatarios principales
+        msg["To"] = ", ".join(destinatarios_principales)
+        print(f"📧 Enviando a destinatarios principales: {', '.join(destinatarios_principales)}")
+            
+        # Manejar múltiples correos en copia correctamente
+        if CORREO_COPIA:
+            # Si CORREO_COPIA tiene múltiples correos, asegurar formato correcto
+            correos_copia = [email.strip() for email in CORREO_COPIA.split(',') if email.strip()]
+            if correos_copia:  # Solo agregar Cc si hay correos válidos
+                msg["Cc"] = ", ".join(correos_copia)
+                print(f"📋 Enviando copia a: {', '.join(correos_copia)}")
+        
         msg["Subject"] = f"Recordatorio de pago - Factura {factura}"
 
-        if moneda== 'USD':
+        if moneda == 'USD':
             cuerpo = generar_correo_usd(nombre, factura, fecha, monto, moneda, dias, url)
-            
         else:
             cuerpo = generar_correo_mxn(nombre, factura, fecha, monto, moneda, dias, url)
             
         msg.attach(MIMEText(cuerpo, "html"))
+        
         mensaje_encoded = {
             'raw': base64.urlsafe_b64encode(msg.as_bytes()).decode()
         }
